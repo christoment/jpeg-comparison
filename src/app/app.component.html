@@ -1,5 +1,7 @@
 <div>
-  <input #fileInput type="file" (change)="setBlobFile(fileInput.files)">
+  <input #fileInput type="file"
+         accept=".jpg,.jpeg,.png"
+         (change)="setBlobFile(fileInput.files)">
 </div>
 <div>
   <app-jpeg-converter *ngIf="blobFile as blob" [blob]="blob"></app-jpeg-converter>
