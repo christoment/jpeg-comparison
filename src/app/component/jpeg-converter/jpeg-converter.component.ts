@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import { BehaviorSubject, debounceTime, map, Observable, Subject, switchMap, takeUntil } from 'rxjs';
+import { BehaviorSubject, debounceTime, Observable, Subject, switchMap, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-jpeg-converter',
@@ -54,7 +54,7 @@ export class JpegConverterComponent implements OnInit, OnDestroy {
     this.canvasContext = this.afterImage.nativeElement.getContext('2d', { alpha: false })!;
 
     this.compressionValueChange$.asObservable().pipe(
-      debounceTime(250),
+      debounceTime(200),
       switchMap((compressionRatio) => {
         const { height, width } = this.beforeImage.nativeElement;
         this.canvasContext.drawImage(this.beforeImage.nativeElement, 0, 0, width, height);
