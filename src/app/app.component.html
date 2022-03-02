@@ -1,8 +1,9 @@
 <div>
-  <input #fileInput type="file"
-         accept=".jpg,.jpeg,.png"
-         (change)="setBlobFile(fileInput.files)">
-</div>
-<div>
-  <app-jpeg-converter *ngIf="blobFile as blob" [blob]="blob"></app-jpeg-converter>
+  <div class="p-4 border-b">
+    <app-jpeg-input (fileSelected)="setBlobFile($event)"></app-jpeg-input>
+    <app-compression-slider [(value)]="compressionRatio"></app-compression-slider>
+  </div>
+  <div class="p-4">
+    <app-jpeg-converter *ngIf="blobFile as blob" [blob]="blob" [compressionRatio]="compressionRatio"></app-jpeg-converter>
+  </div>
 </div>

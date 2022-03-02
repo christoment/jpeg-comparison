@@ -1,16 +1,11 @@
-<div>
-    <input #rangeInput type="range" max="100" min="0" value="50"
-           [value]="rangeValue"
-           class="slider"
-           (input)="jpegCompressionChange(rangeInput.value)" />
-    <span>{{ rangeValue }}%</span>
-</div>
-<div>
-    <div>Before - image size: {{ beforeImageSize }}</div>
-    <img #beforeImage [src]="imageUrl" class="before-image" />
-</div>
-<div>
-    <div>After - image size: {{ afterImageSize }}</div>
-    <canvas #afterImage [hidden]="true"></canvas>
-    <img *ngIf="compressedUrl" [src]="compressedUrl" />
+<div class="grid grid-cols-2">
+    <div>
+        <div class="mb-2">Before - {{ beforeImageSize }}</div>
+        <img #beforeImage [src]="imageUrl" class="before-image" />
+    </div>
+    <div>
+        <div class="mb-2">After - {{ afterImageSize }} ({{ (afterImageSizeInB / beforeImageSizeInB) | percent: '0.1' }})</div>
+        <canvas #afterImage [hidden]="true"></canvas>
+        <img *ngIf="compressedUrl" [src]="compressedUrl" />
+    </div>
 </div>

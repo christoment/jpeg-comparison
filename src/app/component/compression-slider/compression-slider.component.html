@@ -1,0 +1,7 @@
+<div class="flex items-center py-2">
+    <input #rangeInput type="range" max="1" min="0" value="0.5" step="0.01"
+           [value]="value"
+           class="w-1/2 py-2"
+           (input)="jpegCompressionChange(rangeInput.value)" />
+    <span class="ml-2">{{ value | percent }}</span>
+</div>

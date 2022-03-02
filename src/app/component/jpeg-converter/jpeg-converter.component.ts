@@ -1,20 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import { debounceTime, map, Observable, Subject, switchMap, takeUntil } from 'rxjs';
-
-function clamp(value: number, option?: { min?: number, max?: number }): number {
-  const effMin = option?.min ?? 0;
-  const effMax = option?.max ?? 100;
-
-  if (value < effMin) {
-    return effMin;
-  }
-  if (value > effMax) {
-    return effMax;
-  }
-
-  return value;
-}
+import { BehaviorSubject, debounceTime, map, Observable, Subject, switchMap, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-jpeg-converter',
@@ -23,15 +9,16 @@ function clamp(value: number, option?: { min?: number, max?: number }): number {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class JpegConverterComponent implements OnInit, OnDestroy {
-  rangeValue = 50;
-
   imageUrl?: SafeUrl;
   compressedUrl?: SafeUrl;
+
   beforeImageSize = '-';
+  beforeImageSizeInB = 0;
   afterImageSize = '-';
+  afterImageSizeInB = 0;
 
   private canvasContext!: CanvasRenderingContext2D;
-  private compressionValueChange$ = new Subject<number>();
+  private compressionValueChange$ = new BehaviorSubject<number>(0);
   private ngDestroy$ = new Subject<void>();
 
   @Input() set blob(value: Blob | null) {
@@ -39,16 +26,20 @@ export class JpegConverterComponent implements OnInit, OnDestroy {
       this.imageUrl = this.sanitiser.bypassSecurityTrustResourceUrl(URL.createObjectURL(value));
 
       this.beforeImage.nativeElement.onload = () => {
-        this.beforeImageSize = this.convertToClosestSize(value.size);
+        this.beforeImageSizeInB = value.size;
+        this.beforeImageSize = this.convertToClosestSize(this.beforeImageSizeInB);
 
         this.afterImage.nativeElement.width = this.beforeImage.nativeElement.width;
         this.afterImage.nativeElement.height = this.beforeImage.nativeElement.height;
-        this.jpegCompressionChange('50');
+        this.compressionValueChange$.next(this.compressionValueChange$.value);
 
         this.beforeImage.nativeElement.onload = null;
         this.cdr.markForCheck();
       }
     }
+  }
+  @Input() set compressionRatio(value: number) {
+    this.compressionValueChange$.next(value);
   }
 
   @ViewChild('beforeImage', { static: true }) beforeImage!: ElementRef<HTMLImageElement>;
@@ -58,12 +49,6 @@ export class JpegConverterComponent implements OnInit, OnDestroy {
     private sanitiser: DomSanitizer,
     private cdr: ChangeDetectorRef,
   ) {}
-
-  jpegCompressionChange(rangeValue: string): void {
-    this.rangeValue = Number(rangeValue);
-    const valueInNumber = clamp(this.rangeValue / 100.0);
-    this.compressionValueChange$.next(valueInNumber);
-  }
 
   ngOnInit(): void {
     this.canvasContext = this.afterImage.nativeElement.getContext('2d', { alpha: false })!;
@@ -85,7 +70,8 @@ export class JpegConverterComponent implements OnInit, OnDestroy {
       }),
       takeUntil(this.ngDestroy$),
     ).subscribe(({ dataUrl, fileSize }) => {
-      this.afterImageSize = this.convertToClosestSize(fileSize);
+      this.afterImageSizeInB = fileSize;
+      this.afterImageSize = this.convertToClosestSize(this.afterImageSizeInB);
       this.compressedUrl = dataUrl;
       this.cdr.detectChanges();
     });
