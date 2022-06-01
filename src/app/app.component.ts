@@ -26,7 +26,7 @@ export class AppComponent implements OnInit {
 
   ngOnInit(): void {
     // TODO: DEBUG
-    this.http.get('/assets/illustration-logo.png', {
+    this.http.get('assets/illustration-logo.png', {
       responseType: 'arraybuffer'
     }).subscribe(res => {
       this.blobFile = new Blob([res]);
