@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, HostListener, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import prettyBytes from 'pretty-bytes';
 import { BehaviorSubject, debounceTime, Observable, Subject, switchMap, takeUntil } from 'rxjs';
@@ -20,15 +20,15 @@ export class JpegConverterComponent implements OnInit, OnDestroy {
 
   private canvasContext!: CanvasRenderingContext2D;
   private compressionValueChange$ = new BehaviorSubject<number>(0);
+  private refreshCanvas$ = new Subject<void>();
   private ngDestroy$ = new Subject<void>();
 
   @Input() set blob(value: Blob | null) {
     if (value) {
       this.imageUrl = this.sanitiser.bypassSecurityTrustResourceUrl(URL.createObjectURL(value));
 
-      this.beforeImage.nativeElement.onload = () => {
+      this.beforeImage.nativeElement.onload = (x) => {
         this.beforeImageSizeInB = value.size;
-        // console.log(value.size)
         this.beforeImageSize = this.convertToClosestSize(this.beforeImageSizeInB);
 
         this.afterImage.nativeElement.width = this.beforeImage.nativeElement.width;
@@ -46,6 +46,13 @@ export class JpegConverterComponent implements OnInit, OnDestroy {
 
   @ViewChild('beforeImage', { static: true }) beforeImage!: ElementRef<HTMLImageElement>;
   @ViewChild('afterImage', { static: true }) afterImage!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('beforeImagePreview', { static: true }) beforeImagePreview!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('afterImagePreview', { static: true }) afterImagePreview!: ElementRef<HTMLCanvasElement>;
+
+  @HostListener('window:resize', ['$event'])
+  onResize() {
+    this.refreshCanvas();
+  }
 
   constructor(
     private sanitiser: DomSanitizer,
@@ -55,11 +62,24 @@ export class JpegConverterComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.canvasContext = this.afterImage.nativeElement.getContext('2d', { alpha: false })!;
 
+    this.refreshCanvas$.asObservable().pipe(
+      takeUntil(this.ngDestroy$),
+    ).subscribe(() => {
+      this.compressionValueChange$.next(this.compressionValueChange$.value);
+    });
+
     this.compressionValueChange$.asObservable().pipe(
-      debounceTime(200),
+      debounceTime(100),
       switchMap((compressionRatio) => {
         const { height, width } = this.beforeImage.nativeElement;
+        const { height: previewHeight, width: previewWidth } = this.beforeImagePreview.nativeElement;
+        this.canvasContext.canvas.width = width;
+        this.canvasContext.canvas.height = height;
+        this.canvasContext.clearRect(0, 0, width, height);
         this.canvasContext.drawImage(this.beforeImage.nativeElement, 0, 0, width, height);
+
+        this.afterImagePreview.nativeElement.width = previewWidth;
+        this.afterImagePreview.nativeElement.height = previewHeight;
         return new Observable<{ dataUrl: SafeUrl | string, fileSize: number }>((subscriber) => {
           this.canvasContext.canvas.toBlob((blob) => {
             const blobUrl = blob
@@ -82,6 +102,18 @@ export class JpegConverterComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.ngDestroy$.next();
     this.ngDestroy$.complete();
+  }
+
+  public get imageSizeDiff(): number {
+    if (this.beforeImageSizeInB <= 0) {
+      return this.afterImageSizeInB;
+    }
+
+    return this.afterImageSizeInB / this.beforeImageSizeInB;
+  }
+
+  private refreshCanvas(): void {
+    this.refreshCanvas$.next();
   }
 
   private convertToClosestSize(sizeInBytes: number): string {

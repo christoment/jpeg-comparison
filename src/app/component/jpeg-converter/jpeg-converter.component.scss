@@ -1,4 +1,9 @@
-.before-image {
+.before-image,
+.after-image {
+    display: none;
+    max-width: unset;
+}
+
+.before-image-preview {
     max-width: 100%;
-    max-height: 40vh;
 }
