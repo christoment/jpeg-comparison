@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import prettyBytes from 'pretty-bytes';
 import { BehaviorSubject, debounceTime, Observable, Subject, switchMap, takeUntil } from 'rxjs';
 
 @Component({
@@ -27,6 +28,7 @@ export class JpegConverterComponent implements OnInit, OnDestroy {
 
       this.beforeImage.nativeElement.onload = () => {
         this.beforeImageSizeInB = value.size;
+        // console.log(value.size)
         this.beforeImageSize = this.convertToClosestSize(this.beforeImageSizeInB);
 
         this.afterImage.nativeElement.width = this.beforeImage.nativeElement.width;
@@ -82,27 +84,7 @@ export class JpegConverterComponent implements OnInit, OnDestroy {
     this.ngDestroy$.complete();
   }
 
-  private convertToClosestSize(value: number): string {
-    const divider = 1024.0;
-    let level = 0;
-    let quotient = value;
-
-    const levelMap: Record<number, string> = {
-      0: 'B',
-      1: 'kB',
-      2: 'MB',
-      3: 'GB',
-      4: 'TB',
-    };
-    
-    do {
-      level += 1;
-      quotient = value / divider;
-    } while (quotient > divider);
-
-    const integerQuotient = Math.floor(quotient);
-    const remainder = (quotient - integerQuotient) * 100;
-
-    return `${integerQuotient}.${remainder.toFixed(0)}${levelMap[level] ?? ''}`
+  private convertToClosestSize(sizeInBytes: number): string {
+    return prettyBytes(sizeInBytes, { maximumFractionDigits: 2, minimumFractionDigits: 2 });
   }
 }

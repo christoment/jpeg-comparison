@@ -14,7 +14,7 @@ export class AppComponent implements OnInit {
     private http: HttpClient
   ) { }
 
-  setBlobFile(targetFile: File | undefined) {
+  setBlobFile(targetFile: File | Blob | undefined) {
     if (targetFile) {
       this.blobFile = targetFile;
     }
@@ -24,7 +24,7 @@ export class AppComponent implements OnInit {
     this.http.get('assets/illustration-logo.png', {
       responseType: 'arraybuffer'
     }).subscribe(res => {
-      this.blobFile = new Blob([res]);
+      this.setBlobFile(new Blob([res]));
     });
   }
 }
