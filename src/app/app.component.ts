@@ -20,12 +20,7 @@ export class AppComponent implements OnInit {
     }
   }
 
-  compressionChange(compressionRate: number) {
-
-  }
-
   ngOnInit(): void {
-    // TODO: DEBUG
     this.http.get('assets/illustration-logo.png', {
       responseType: 'arraybuffer'
     }).subscribe(res => {

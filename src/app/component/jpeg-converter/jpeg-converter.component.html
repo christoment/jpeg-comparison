@@ -5,7 +5,7 @@
     </div>
     <div>
         <div class="mb-2">After - {{ afterImageSize }} ({{ (afterImageSizeInB / beforeImageSizeInB) | percent: '0.1' }})</div>
-        <canvas #afterImage [hidden]="true"></canvas>
+        <canvas #afterImage class="hidden"></canvas>
         <img *ngIf="compressedUrl" [src]="compressedUrl" />
     </div>
 </div>
